@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic
+mistralai
+groq
+cerebras-cloud-sdk
