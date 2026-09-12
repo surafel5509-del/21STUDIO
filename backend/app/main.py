@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import FRONTEND_URL
-from app.routes import chat, health
+from app.memory import init_memory
+from app.routes import chat, health, memory
 
 app = FastAPI(title="21STUDIO AI Agent API", version="0.1.0")
 
@@ -14,5 +15,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.on_event("startup")
+def startup() -> None:
+    init_memory()
+
+
 app.include_router(health.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
+app.include_router(memory.router, prefix="/api")
