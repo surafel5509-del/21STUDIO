@@ -1,8 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
-from app.schemas import ChatRequest, ChatResponse
-from app.providers.router import choose_provider
 from app.agent.agent import Agent
+from app.schemas import ChatRequest, ChatResponse
 
 router = APIRouter()
 agent = Agent()
@@ -10,6 +9,8 @@ agent = Agent()
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
-    provider = choose_provider(request.provider)
-    reply = await agent.run(request.message)
-    return ChatResponse(reply=reply, provider=provider)
+    try:
+        reply, provider = await agent.run(request.message, request.provider)
+        return ChatResponse(reply=reply, provider=provider)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
