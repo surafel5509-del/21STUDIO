@@ -28,7 +28,7 @@ The frontend keeps the active conversation ID in browser local storage. Users ca
 
 The database defaults to `backend/data/memory.db` and is ignored by Git. You can override it with `MEMORY_DB_PATH` in `backend/.env`.
 
-For larger production deployments, the SQLite layer can later be replaced with PostgreSQL or another database. FastAPI supports using SQL databases through libraries such as SQLModel. citeturn0search0
+For larger production deployments, the SQLite layer can later be replaced with PostgreSQL or another database. FastAPI supports using SQL databases through libraries such as SQLModel.
 
 ## Project structure
 
