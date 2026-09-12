@@ -1,5 +1,6 @@
 import ast
 import json
+import math
 import operator
 from typing import Any, Callable
 
@@ -10,36 +11,61 @@ class ToolError(Exception):
     pass
 
 
+MAX_EXPRESSION_LENGTH = 500
+MAX_AST_NODES = 100
+MAX_ABS_RESULT = 1e100
+
+
 def _safe_calculate(expression: str) -> str:
     """Evaluate basic arithmetic without using eval()."""
+    expression = expression.strip()
+    if not expression:
+        raise ToolError("Expression cannot be empty")
+    if len(expression) > MAX_EXPRESSION_LENGTH:
+        raise ToolError("Expression is too long")
+
     allowed_binary = {
         ast.Add: operator.add,
         ast.Sub: operator.sub,
         ast.Mult: operator.mul,
         ast.Div: operator.truediv,
+        ast.FloorDiv: operator.floordiv,
         ast.Pow: operator.pow,
         ast.Mod: operator.mod,
     }
     allowed_unary = {ast.UAdd: operator.pos, ast.USub: operator.neg}
 
-    def visit(node: ast.AST) -> float:
+    try:
+        tree = ast.parse(expression, mode="eval")
+    except (SyntaxError, ValueError, MemoryError, RecursionError) as exc:
+        raise ToolError(f"Invalid calculation: {exc}") from exc
+
+    if sum(1 for _ in ast.walk(tree)) > MAX_AST_NODES:
+        raise ToolError("Expression is too complex")
+
+    def visit(node: ast.AST) -> int | float:
         if isinstance(node, ast.Expression):
             return visit(node.body)
-        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
             return node.value
         if isinstance(node, ast.BinOp) and type(node.op) in allowed_binary:
             left, right = visit(node.left), visit(node.right)
             if isinstance(node.op, ast.Pow) and abs(right) > 100:
                 raise ToolError("Exponent is too large")
-            return allowed_binary[type(node.op)](left, right)
+            result = allowed_binary[type(node.op)](left, right)
+            if not math.isfinite(float(result)) or abs(float(result)) > MAX_ABS_RESULT:
+                raise ToolError("Calculation result is too large or non-finite")
+            return result
         if isinstance(node, ast.UnaryOp) and type(node.op) in allowed_unary:
-            return allowed_unary[type(node.op)](visit(node.operand))
+            result = allowed_unary[type(node.op)](visit(node.operand))
+            if not math.isfinite(float(result)) or abs(float(result)) > MAX_ABS_RESULT:
+                raise ToolError("Calculation result is too large or non-finite")
+            return result
         raise ToolError("Only basic arithmetic is supported")
 
     try:
-        tree = ast.parse(expression, mode="eval")
         result = visit(tree)
-    except (SyntaxError, ValueError, ZeroDivisionError, OverflowError) as exc:
+    except (TypeError, ValueError, ZeroDivisionError, OverflowError) as exc:
         raise ToolError(f"Invalid calculation: {exc}") from exc
 
     return str(result)
@@ -79,7 +105,7 @@ TOOLS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "calculate",
-            "description": "Calculate a basic arithmetic expression. Use this for exact arithmetic instead of mental math.",
+            "description": "Calculate a basic arithmetic expression exactly. Use this instead of mental math for arithmetic.",
             "parameters": {
                 "type": "object",
                 "properties": {
