@@ -5,3 +5,4 @@ pydantic
 mistralai
 groq
 cerebras-cloud-sdk
+ddgs
