@@ -4,9 +4,9 @@ from typing import Any, AsyncIterator
 from cerebras.cloud.sdk import Cerebras
 
 from app.agent.tools import TOOLS
-from app.config import CEREBRAS_API_KEY
+from app.config import CEREBRAS_API_KEY, CEREBRAS_MODEL
 
-MODEL = "gpt-oss-120b"
+MODEL = CEREBRAS_MODEL
 
 
 def _complete(messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None):
