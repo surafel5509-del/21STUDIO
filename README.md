@@ -9,6 +9,15 @@
 - Providers: Mistral, Groq, Cerebras
 - Provider mode: Auto / manual selection
 - Fallback: automatic provider failover
+- Tool calling: local function tools
+- Web search: public web search tool via `ddgs`
+
+## Tools
+
+- `calculate` — safe basic arithmetic evaluator (no Python `eval`)
+- `web_search` — searches the public web and returns titles, URLs, and snippets to the agent
+
+The agent can decide when to call a tool, execute it locally, return the tool result to the model, and continue until a final answer is produced.
 
 ## Project structure
 
@@ -19,11 +28,10 @@
 ├── backend/
 │   └── app/
 │       ├── agent/
+│       │   ├── agent.py
+│       │   ├── tool_loop.py
+│       │   └── tools.py
 │       ├── providers/
-│       │   ├── mistral.py
-│       │   ├── groq.py
-│       │   ├── cerebras.py
-│       │   └── router.py
 │       └── routes/
 ├── .gitignore
 └── README.md
@@ -74,6 +82,10 @@ Open `http://localhost:3000`.
 
 The agent tries configured providers in the requested order. If a provider is unavailable, errors, times out, or is rate-limited, the agent automatically tries the next configured provider.
 
+## Web search
+
+Web search is implemented as a normal local function tool, so it works with the existing Mistral, Groq, and Cerebras provider router instead of locking the whole agent to one provider. Search results are passed back to the model as structured JSON containing a query, title, URL, and snippet.
+
 ## Security
 
 Keep provider API keys only in `backend/.env`. Never commit secrets or put provider keys in the frontend.
@@ -86,7 +98,7 @@ Keep provider API keys only in `backend/.env`. Never commit secrets or put provi
 - [x] Groq integration
 - [x] Cerebras integration
 - [x] Automatic fallback routing
+- [x] Tool calling
+- [x] Web search
 - [ ] Streaming responses
-- [ ] Tool calling
 - [ ] Memory
-- [ ] Web search
