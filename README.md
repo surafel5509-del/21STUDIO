@@ -59,7 +59,7 @@ Open `http://localhost:3000`.
 
 ## Vercel deployment
 
-Vercel has first-class support for Next.js and automatically detects Next.js build settings. For this repository, create a Vercel project from the GitHub repository and set **Root Directory** to `frontend`. Keep the default Next.js build command and output settings. citehttps://nextjs.org/learn/pages-router/deploying-nextjs-apphttps://vercel.com/frameworks/nextjs
+Vercel has first-class support for Next.js. For this repository, create a Vercel project from the GitHub repository and set **Root Directory** to `frontend`. Keep the default Next.js build command and output settings.
 
 Add this production environment variable in Vercel:
 
@@ -67,9 +67,9 @@ Add this production environment variable in Vercel:
 NEXT_PUBLIC_API_URL=https://YOUR-BACKEND-DOMAIN
 ```
 
-The frontend must point to a publicly reachable backend. Provider API keys stay on the backend and must never use the `NEXT_PUBLIC_` prefix. Vercel documents that `NEXT_PUBLIC_*` values are exposed to the browser bundle. citehttps://vercel.com/academy/nextjs-foundations/env-and-security
+The frontend must point to a publicly reachable backend. Provider API keys stay on the backend and must never use the `NEXT_PUBLIC_` prefix because public variables are exposed to the browser bundle.
 
-After changing Vercel environment variables, redeploy so the new values are applied. citehttps://vercel.com/academy/vercel-foundations/vercel-settings
+After changing Vercel environment variables, redeploy so the new values are applied.
 
 ## Security
 
