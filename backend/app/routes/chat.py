@@ -14,7 +14,12 @@ agent = Agent()
 async def chat(request: ChatRequest) -> ChatResponse:
     try:
         reply, provider, conversation_id = await agent.run(
-            request.message, request.provider, request.conversation_id, request.mode, request.thinking_mode
+            request.message,
+            request.provider,
+            request.conversation_id,
+            request.mode,
+            request.thinking_mode,
+            request.attachment_context,
         )
         return ChatResponse(reply=reply, provider=provider, conversation_id=conversation_id)
     except RuntimeError as exc:
@@ -28,8 +33,17 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
             yield f"data: {json.dumps({'type': 'status', 'status': 'thinking', 'mode': request.mode})}\n\n"
             if request.mode == "research":
                 yield f"data: {json.dumps({'type': 'status', 'status': 'researching', 'label': 'Searching sources and comparing findings'})}\n\n"
+            elif request.mode == "agent":
+                yield f"data: {json.dumps({'type': 'status', 'status': 'agent', 'label': 'Planning and executing the task'})}\n\n"
+            if request.attachment_context:
+                yield f"data: {json.dumps({'type': 'status', 'status': 'document', 'label': 'Reading the attached document'})}\n\n"
             async for chunk, provider, conversation_id in agent.stream(
-                request.message, request.provider, request.conversation_id, request.mode, request.thinking_mode
+                request.message,
+                request.provider,
+                request.conversation_id,
+                request.mode,
+                request.thinking_mode,
+                request.attachment_context,
             ):
                 yield f"data: {json.dumps({'type': 'token', 'content': chunk, 'provider': provider, 'conversation_id': conversation_id})}\n\n"
             yield "data: {\"type\":\"done\"}\n\n"
