@@ -4,9 +4,9 @@ from typing import Any, AsyncIterator
 from mistralai.client import Mistral
 
 from app.agent.tools import TOOLS
-from app.config import MISTRAL_API_KEY
+from app.config import MISTRAL_API_KEY, MISTRAL_MODEL
 
-MODEL = "mistral-large-latest"
+MODEL = MISTRAL_MODEL
 
 
 def _complete(messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None):
