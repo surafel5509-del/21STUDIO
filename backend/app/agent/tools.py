@@ -3,6 +3,8 @@ import json
 import operator
 from typing import Any, Callable
 
+from ddgs import DDGS
+
 
 class ToolError(Exception):
     pass
@@ -43,6 +45,35 @@ def _safe_calculate(expression: str) -> str:
     return str(result)
 
 
+def _web_search(query: str, max_results: int = 5) -> str:
+    """Search the public web and return compact, model-readable results."""
+    query = query.strip()
+    if not query:
+        raise ToolError("Search query cannot be empty")
+
+    max_results = max(1, min(int(max_results), 8))
+
+    try:
+        results = list(DDGS().text(query, max_results=max_results))
+    except Exception as exc:
+        raise ToolError(f"Web search failed: {exc}") from exc
+
+    if not results:
+        return json.dumps({"query": query, "results": []})
+
+    compact = []
+    for item in results:
+        compact.append(
+            {
+                "title": item.get("title", ""),
+                "url": item.get("href", ""),
+                "snippet": item.get("body", ""),
+            }
+        )
+
+    return json.dumps({"query": query, "results": compact}, ensure_ascii=False)
+
+
 TOOLS: list[dict[str, Any]] = [
     {
         "type": "function",
@@ -60,11 +91,35 @@ TOOLS: list[dict[str, Any]] = [
                 "required": ["expression"],
             },
         },
-    }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Search the public web for current or unknown information. Use this when the answer may be newer than the model's knowledge or when sources would improve confidence.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "A concise web search query using important keywords.",
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 8,
+                        "default": 5,
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    },
 ]
 
 TOOL_FUNCTIONS: dict[str, Callable[..., str]] = {
     "calculate": _safe_calculate,
+    "web_search": _web_search,
 }
 
 
@@ -78,7 +133,7 @@ def execute_tool(name: str, arguments: str | dict[str, Any]) -> str:
         if not isinstance(args, dict):
             raise ToolError("Tool arguments must be a JSON object")
         result = function(**args)
-        return json.dumps({"result": result})
+        return json.dumps({"result": result}, ensure_ascii=False)
     except ToolError:
         raise
     except Exception as exc:
