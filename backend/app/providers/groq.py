@@ -4,9 +4,9 @@ from typing import Any, AsyncIterator
 from groq import Groq
 
 from app.agent.tools import TOOLS
-from app.config import GROQ_API_KEY
+from app.config import GROQ_API_KEY, GROQ_MODEL
 
-MODEL = "llama-3.3-70b-versatile"
+MODEL = GROQ_MODEL
 
 
 def _complete(messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None):
