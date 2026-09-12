@@ -11,6 +11,7 @@
 - Fallback: automatic provider failover
 - Tool calling: local function tools
 - Web search: public web search tool via `ddgs`
+- Memory: persistent SQLite conversation memory
 
 ## Tools
 
@@ -18,6 +19,16 @@
 - `web_search` — searches the public web and returns titles, URLs, and snippets to the agent
 
 The agent can decide when to call a tool, execute it locally, return the tool result to the model, and continue until a final answer is produced.
+
+## Memory
+
+Each chat is assigned a conversation ID. The backend stores user and assistant turns in a local SQLite database and reloads the recent conversation history before each model call. This means conversation context survives backend restarts.
+
+The frontend keeps the active conversation ID in browser local storage. Users can start a new chat or permanently clear the current conversation through the UI.
+
+The database defaults to `backend/data/memory.db` and is ignored by Git. You can override it with `MEMORY_DB_PATH` in `backend/.env`.
+
+For larger production deployments, the SQLite layer can later be replaced with PostgreSQL or another database. FastAPI supports using SQL databases through libraries such as SQLModel. citeturn0search0
 
 ## Project structure
 
@@ -31,8 +42,12 @@ The agent can decide when to call a tool, execute it locally, return the tool re
 │       │   ├── agent.py
 │       │   ├── tool_loop.py
 │       │   └── tools.py
+│       ├── memory.py
 │       ├── providers/
 │       └── routes/
+│           ├── chat.py
+│           ├── health.py
+│           └── memory.py
 ├── .gitignore
 └── README.md
 ```
@@ -50,16 +65,7 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Put your provider keys in `backend/.env`:
-
-```env
-MISTRAL_API_KEY=your_key
-GROQ_API_KEY=your_key
-CEREBRAS_API_KEY=your_key
-DEFAULT_PROVIDER=auto
-PROVIDER_ORDER=cerebras,groq,mistral
-FRONTEND_URL=http://localhost:3000
-```
+Put your provider keys in `backend/.env` and optionally configure `MEMORY_DB_PATH`.
 
 Start the API:
 
@@ -88,7 +94,7 @@ Web search is implemented as a normal local function tool, so it works with the 
 
 ## Security
 
-Keep provider API keys only in `backend/.env`. Never commit secrets or put provider keys in the frontend.
+Keep provider API keys only in `backend/.env`. Never commit secrets or put provider keys in the frontend. The local memory database is also ignored by Git.
 
 ## Current milestone
 
@@ -100,5 +106,6 @@ Keep provider API keys only in `backend/.env`. Never commit secrets or put provi
 - [x] Automatic fallback routing
 - [x] Tool calling
 - [x] Web search
+- [x] Persistent conversation memory
 - [ ] Streaming responses
-- [ ] Memory
+- [ ] Semantic long-term memory / RAG
