@@ -2,6 +2,8 @@ fastapi
 uvicorn[standard]
 python-dotenv
 pydantic
+python-multipart
+pypdf
 mistralai
 groq
 cerebras-cloud-sdk
