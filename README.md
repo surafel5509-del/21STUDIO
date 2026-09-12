@@ -8,6 +8,7 @@
 - Backend: FastAPI + Python
 - Providers: Mistral, Groq, Cerebras
 - Provider mode: Auto / manual selection
+- Fallback: automatic provider failover
 
 ## Project structure
 
@@ -19,6 +20,10 @@
 │   └── app/
 │       ├── agent/
 │       ├── providers/
+│       │   ├── mistral.py
+│       │   ├── groq.py
+│       │   ├── cerebras.py
+│       │   └── router.py
 │       └── routes/
 ├── .gitignore
 └── README.md
@@ -35,6 +40,22 @@ python -m venv .venv
 # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
 cp .env.example .env
+```
+
+Put your provider keys in `backend/.env`:
+
+```env
+MISTRAL_API_KEY=your_key
+GROQ_API_KEY=your_key
+CEREBRAS_API_KEY=your_key
+DEFAULT_PROVIDER=auto
+PROVIDER_ORDER=cerebras,groq,mistral
+FRONTEND_URL=http://localhost:3000
+```
+
+Start the API:
+
+```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -49,12 +70,23 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Provider fallback
+
+The agent tries configured providers in the requested order. If a provider is unavailable, errors, times out, or is rate-limited, the agent automatically tries the next configured provider.
+
 ## Security
 
 Keep provider API keys only in `backend/.env`. Never commit secrets or put provider keys in the frontend.
 
-## Roadmap
+## Current milestone
 
-1. Connect real Mistral, Groq, and Cerebras SDK calls.
-2. Add automatic fallback and health-aware routing.
-3. Add agent planning, tools, memory, and streaming responses.
+- [x] FastAPI backend
+- [x] Next.js frontend
+- [x] Mistral integration
+- [x] Groq integration
+- [x] Cerebras integration
+- [x] Automatic fallback routing
+- [ ] Streaming responses
+- [ ] Tool calling
+- [ ] Memory
+- [ ] Web search
