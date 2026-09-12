@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any
+from typing import Any, AsyncIterator
 
 from mistralai.client import Mistral
 
@@ -24,3 +24,23 @@ def _complete(messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None
 
 async def chat(messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None):
     return await asyncio.to_thread(_complete, messages, tools)
+
+
+def _stream(messages: list[dict[str, Any]]):
+    if not MISTRAL_API_KEY:
+        raise RuntimeError("MISTRAL_API_KEY is not configured")
+    client = Mistral(api_key=MISTRAL_API_KEY)
+    return client.chat.stream(model=MODEL, messages=messages)
+
+
+async def stream(messages: list[dict[str, Any]]) -> AsyncIterator[str]:
+    stream_response = await asyncio.to_thread(_stream, messages)
+    for event in stream_response:
+        data = getattr(event, "data", None)
+        choices = getattr(data, "choices", None) if data is not None else None
+        if not choices:
+            continue
+        delta = getattr(choices[0], "delta", None)
+        content = getattr(delta, "content", None) if delta is not None else None
+        if content:
+            yield content
