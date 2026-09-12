@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 const CONVERSATION_KEY = "21studio-conversation-id";
 
 type StreamEvent = { type: "token" | "done" | "error"; content?: string; provider?: string; conversation_id?: string; error?: string };
@@ -54,7 +54,7 @@ export default function Home() {
     setMessages((current) => [...current, { role: "user", content: currentMessage }, { role: "assistant", content: "" }]);
 
     try {
-      const response = await fetch(`${API_URL}/api/chat/stream`, {
+      const response = await fetch(`${API_URL}/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
         body: JSON.stringify({ message: currentMessage, provider, conversation_id: conversationId || null }),
@@ -100,7 +100,7 @@ export default function Home() {
 
   async function clearConversation() {
     if (!conversationId) return newConversation();
-    try { await fetch(`${API_URL}/api/memory/${conversationId}`, { method: "DELETE" }); } finally { newConversation(); }
+    try { await fetch(`${API_URL}/memory/${conversationId}`, { method: "DELETE" }); } finally { newConversation(); }
   }
 
   const selected = providers.find((item) => item.id === provider) ?? providers[0];
