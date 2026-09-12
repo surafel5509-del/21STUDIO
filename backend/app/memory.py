@@ -5,7 +5,7 @@ from typing import Any
 from uuid import uuid4
 
 DEFAULT_DB_PATH = Path(__file__).resolve().parents[1] / "data" / "memory.db"
-DB_PATH = Path(os.getenv("MEMORY_DB_PATH", str(DEFAULT_DB_PATH)))
+DB_PATH = Path(os.getenv("MEMORY_DB_PATH") or str(DEFAULT_DB_PATH))
 
 
 def _connect() -> sqlite3.Connection:
@@ -17,6 +17,7 @@ def _connect() -> sqlite3.Connection:
 
 def init_memory() -> None:
     with _connect() as connection:
+        connection.execute("PRAGMA foreign_keys = ON")
         connection.executescript(
             """
             CREATE TABLE IF NOT EXISTS conversations (
@@ -43,6 +44,7 @@ def init_memory() -> None:
 def ensure_conversation(conversation_id: str | None = None) -> str:
     conversation_id = conversation_id or str(uuid4())
     with _connect() as connection:
+        connection.execute("PRAGMA foreign_keys = ON")
         exists = connection.execute(
             "SELECT 1 FROM conversations WHERE id = ?",
             (conversation_id,),
@@ -73,6 +75,7 @@ def get_history(conversation_id: str, limit: int = 24) -> list[dict[str, str]]:
 
 def save_turn(conversation_id: str, user_message: str, assistant_message: str) -> None:
     with _connect() as connection:
+        connection.execute("PRAGMA foreign_keys = ON")
         connection.execute(
             "INSERT OR IGNORE INTO conversations (id) VALUES (?)",
             (conversation_id,),
