@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import FRONTEND_URL
+from app.config import ALLOWED_ORIGINS
 from app.memory import init_memory
 from app.routes import chat, health, memory
 
@@ -9,7 +9,7 @@ app = FastAPI(title="21STUDIO AI Agent API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
