@@ -1,22 +1,6 @@
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-.env
-backend/.env
-backend/data/*.db
-
-# Node
-node_modules/
-.next/
-out/
-frontend/.env.local
-
-# OS
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
+.gradle/
+build/
+**/build/
+.local.properties
+*.iml
 .idea/

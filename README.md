@@ -1,91 +1,57 @@
-# 21STUDIO AI Agent
+# TwentyOne 2D Engine
 
-21STUDIO is a modern multi-provider AI Agent web application with a polished, responsive workspace UI.
+A modular Kotlin Android 2D game-engine foundation for API 24+ games. Rendering uses a GLES 2 surface, not Canvas. The project targets API 35 and keeps the simulation deterministic through a fixed 60 Hz game loop.
 
-## Stack
+## Modules
 
-- Frontend: Next.js + TypeScript
-- Backend: FastAPI + Python
-- Providers: Mistral, Groq, Cerebras
-- Provider mode: Auto / manual selection
-- Fallback: automatic provider failover
-- Tool calling: local function tools
-- Web search: public web search tool via `ddgs`
-- Memory: persistent SQLite conversation memory
-- Streaming: Server-Sent Events (SSE) token streaming
+| Module | Responsibility |
+| --- | --- |
+| `engine-core` | ECS, math, fixed timestep loop, scenes, animation, saves |
+| `engine-android` | activity lifecycle and concurrent multi-touch input queue |
+| `engine-opengl` | GLES surface, camera, shader lifecycle and batched sprite ordering |
+| `engine-assets` | coroutine-backed asset bitmap cache |
+| `engine-physics` | colliders, rigid-body data, AABB testing, spatial hash |
+| `engine-audio` | SoundPool effects and MediaPlayer music |
+| `engine-ui` | allocation-light in-game retained UI nodes |
+| `engine-debug` | metrics and Android log bridge |
+| `app` | GLES sample application |
 
-## Frontend experience
-
-The frontend includes a premium dark workspace design with responsive layouts, animated ambient lighting, smooth message transitions, streaming cursors, provider switching, auto-growing composer, keyboard send, quick-start prompts, reduced-motion support, and mobile-friendly controls.
-
-## Tools
-
-- `calculate` — safe basic arithmetic evaluator (no Python `eval`)
-- `web_search` — searches the public web and returns titles, URLs, and snippets to the agent
-
-## Memory
-
-Each chat is assigned a conversation ID. The backend stores user and assistant turns in a local SQLite database and reloads recent conversation history before each model call. The frontend keeps the active conversation ID in browser local storage and lets users start a new chat or clear memory.
-
-## Local setup
-
-### Backend
+## Build
 
 ```bash
-cd backend
-python -m venv .venv
-# Linux/macOS: source .venv/bin/activate
-# Windows: .venv\\Scripts\\activate
-pip install -r requirements.txt
-cp .env.example .env
+gradle :engine-core:test
+gradle :app:assembleDebug
 ```
 
-Put provider keys in `backend/.env`, then start the API:
+An Android SDK with platform 35 is required for Android modules. Open the repository root as a standalone Gradle project in Android Studio.
 
-```bash
-uvicorn app.main:app --reload --port 8000
+## Usage
+
+```kotlin
+val world = World()
+val player = world.create()
+world.put(player, Rigidbody(velocity = Vec2(3f, 0f)))
+world.addSystem(object : GameSystem {
+    override fun update(world: World, deltaSeconds: Float) { /* game logic */ }
+})
+
+val loop = GameLoop(world) { interpolation -> spriteBatch.flush() }
+val saveJson = SaveCodec.encode(SaveGame("slot-1", mapOf("coins" to "15")))
 ```
 
-### Frontend
+Load a texture asynchronously with `assets.texture("sprites/player.png")`; use `AudioEngine.play` for a SoundPool effect. `InputQueue.drain` must be called from the game thread, preserving Android UI-thread input ownership.
 
-```bash
-cd frontend
-npm install
-cp .env.example .env.local
-npm run dev
-```
+## Performance notes
 
-Open `http://localhost:3000`.
+* Systems receive fixed delta time; avoid blocking and allocations inside `update`.
+* Reuse vectors through `Vec2Pool` for temporary work and clear `SpriteBatch` each frame.
+* Use texture atlases in production and sort transparent sprites by layer as required by your art pipeline.
+* Keep physics hash cells close to a typical collider size; layer expensive systems behind culling.
 
-## Vercel deployment
+See [architecture.md](docs/architecture.md) for ownership and extension points.
 
-Vercel has first-class support for Next.js. For this repository, create a Vercel project from the GitHub repository and set **Root Directory** to `frontend`. Keep the default Next.js build command and output settings.
+## Delivery plan
 
-Add this production environment variable in Vercel:
-
-```text
-NEXT_PUBLIC_API_URL=https://YOUR-BACKEND-DOMAIN
-```
-
-The frontend must point to a publicly reachable backend. Provider API keys stay on the backend and must never use the `NEXT_PUBLIC_` prefix because public variables are exposed to the browser bundle.
-
-After changing Vercel environment variables, redeploy so the new values are applied.
-
-## Security
-
-Keep provider API keys only in `backend/.env` or your backend hosting provider's secret/environment settings. Never commit secrets or put provider keys in the frontend.
-
-## Current milestone
-
-- [x] FastAPI backend
-- [x] Next.js frontend
-- [x] Mistral integration
-- [x] Groq integration
-- [x] Cerebras integration
-- [x] Automatic fallback routing
-- [x] Tool calling
-- [x] Web search
-- [x] Persistent conversation memory
-- [x] Streaming responses
-- [x] Premium responsive UI and animations
-- [ ] Semantic long-term memory / RAG
+The engine is being built in testable production milestones. The current code implements the
+foundation layer; the renderer, gameplay, and tooling expansions are tracked explicitly in the
+[production roadmap](docs/roadmap.md). This avoids presenting stubs as completed editor features.
