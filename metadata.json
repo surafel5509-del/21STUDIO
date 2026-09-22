@@ -1,0 +1,6 @@
+{
+  "name": "Engine Sample",
+  "description": "2D game engine sample application with ECS loop and OpenGL ES rendering.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
